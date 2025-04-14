@@ -143,5 +143,23 @@ pipeline {
                 }
             }
         }
+        
+        stage('Simulated Staging Tests (wait 2 mins)'){
+            steps {
+                script {
+                    sleep 120 // seconds
+                }
+            }
+        }
+        
+        stage('Call Staging API'){
+            steps {
+                script {
+                    sh 'curl -u admin:Welcome2 -X POST http://host.docker.internal:8081/service/rest/v1/staging/move/TSTest-Release?tag=${BUILD_TAG}'
+                }
+            }
+        }
+        
+        
     }
 }
