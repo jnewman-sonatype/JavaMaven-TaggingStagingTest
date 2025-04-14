@@ -144,10 +144,10 @@ pipeline {
             }
         }
         
-        stage('Simulated Staging Tests (wait 2 mins)'){
+        stage('Simulated Staging Tests (wait 1 min)'){
             steps {
                 script {
-                    sleep 120 // seconds
+                    sleep 60 // seconds
                 }
             }
         }
