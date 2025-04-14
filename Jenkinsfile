@@ -28,15 +28,15 @@ pipeline {
     agent any
     parameters
     {
-        string(name: 'groupId', description: 'groupId from the project pom.xml')
-        string(name: 'artifactId', description: 'artifactId from the project pom.xml')
-        string(name: 'version', description: 'version from the project pom.xml')
-        string(name: 'packaging', description: 'The file format extension of the final artefact e.g. ear | war | jar')
-        string(name: 'iqAppID', description: 'IQ Server Application ID to evaluate against')
-        string(name: 'iqStage', description: 'IQ Server stage to evaluate against, Options are: build | stage-release | release')
-        // string(name: 'nexusInstanceId', description: 'Nexus Repository Manager InstanceId as defined in Settings, Configure System')
-        string(name: 'DEPLOY_REPO', description: 'Deployment repository for your built artifact. Usually maven-releases')
-    } 
+        string(name: 'groupId', defaultValue: 'JNTestApps', description: 'groupId taken from the project pom.xml')
+        string(name: 'artifactId', defaultValue: 'JavaMaven-TaggingStagingTest', description: 'artifactId taken from the project pom.xml')
+        string(name: 'version', defaultValue: '1.0.0', description: 'version taken from the project pom.xml')
+        string(name: 'packaging', defaultValue: 'jar', description: 'The file format extension of the final artefact e.g. ear | war | jar')
+        string(name: 'iqAppID', defaultValue: 'JavaMaven-TaggingStagingTest', description: 'IQ Server Application ID to evaluate against')
+        string(name: 'iqStage', defaultValue: 'build', description: 'IQ Server stage to evaluate against, Options are: build | stage-release | release')
+        string(name: 'DEPLOY_REPO', defaultValue: 'TSTest-Staging', description: 'Deployment repository for your built artifact. Usually maven-releases')
+    }
+
     environment {
        ARTEFACT_NAME = "${WORKSPACE}/target/${artifactId}-${version}.${packaging}"
        //DEPLOY_REPO = 'maven-releases'
