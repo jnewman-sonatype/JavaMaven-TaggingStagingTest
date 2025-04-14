@@ -26,7 +26,7 @@
 
 pipeline {
     agent any
-/*    parameters
+    parameters
     {
         string(name: 'groupId', description: 'groupId from the project pom.xml')
         string(name: 'artifactId', description: 'artifactId from the project pom.xml')
@@ -36,7 +36,7 @@ pipeline {
         string(name: 'iqStage', description: 'IQ Server stage to evaluate against, Options are: build | stage-release | release')
         // string(name: 'nexusInstanceId', description: 'Nexus Repository Manager InstanceId as defined in Settings, Configure System')
         string(name: 'DEPLOY_REPO', description: 'Deployment repository for your built artifact. Usually maven-releases')
-    } */
+    } 
     environment {
        ARTEFACT_NAME = "${WORKSPACE}/target/${artifactId}-${version}.${packaging}"
        //DEPLOY_REPO = 'maven-releases'
@@ -48,66 +48,7 @@ pipeline {
        maven 'M3'
     }
     stages {
-      
-        stage('Setup parameters') {
-            steps {
-                script { 
-                    properties([
-                        parameters([
-                            string(
-                                name: 'groupId',
-                                description: 'groupId from the project pom.xml'
-                            ),
-                            string(
-                                name: 'artifactId',
-                                description: 'artifactId from the project pom.xml'
-                            ),
-                            string(
-                                name: 'version',
-                                description: 'version from the project pom.xml'
-                            ),
-                            string(
-                                name: 'packaging',
-                                description: 'The file format extension of the final artefact e.g. ear | war | jar',
-                                defaultValue: 'jar'
-                            ),
-                            string(
-                                name: 'iqAppID',
-                                description: 'IQ Server Application ID to evaluate against'
-                            ),
-                            string(
-                                name: 'iqStage',
-                                description: 'IQ Server stage to evaluate against, Options are: build | stage-release | release',
-                                defaultValue: 'build'
-                            ),
-                            string(
-                                name: 'DEPLOY_REPO',
-                                description: 'Deployment repository for your built artifact. Usually maven-releases',
-                                defaultValue: 'maven-releases'
-                            )
-                        ])
-                    ])
-                }
-            }
-        }
-      
-/*
-        stage('POM Evaluation')
-        {
-            steps
-            {
-                script
-                {
-                    String pomGroupId = sh script: 'mvn help:evaluate -Dexpression=project.groupId -q -DforceStdout', returnStdout: true
-                    String pomArtifactId = sh script: 'mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout', returnStdout: true
-                    String pomVersion = sh script: 'mvn help:evaluate -Dexpression=project.version -q -DforceStdout', returnStdout: true
-                    String pomPackaging = sh script: 'mvn help:evaluate -Dexpression=project.packaging -q -DforceStdout', returnStdout: true
-                    echo "POM Defined GAV: ${pomGroupId} ${pomArtifactId} ${pomVersion}"
-                    echo "POM Defined packaging: ${pomPackaging}"
-                }
-            }
-        }
-*/
+
         stage('Build') {
             steps {
                 sh 'mvn -s ci_settings.xml -gs ci_settings.xml -B -Dproject.version=$BUILD_VERSION -Dmaven.test.failure.ignore clean package'
@@ -161,7 +102,7 @@ pipeline {
             }
         }
 
-/*         stage('Create tag'){
+         stage('Create tag'){
             steps {
                 script {
     
@@ -201,6 +142,6 @@ pipeline {
                     nexusPublisher nexusInstanceId: 'nexus', nexusRepositoryId: "${DEPLOY_REPO}", packages: [[$class: 'MavenPackage', mavenAssetList: [[classifier: '', extension: "${packaging}", filePath: "${ARTEFACT_NAME}"]], mavenCoordinate: [artifactId: "${artifactId}", groupId: "${groupId}", packaging: "${packaging}", version: "${version}"]]], tagName: "${BUILD_TAG}"
                 }
             }
-        } */
+        }
     }
 }
