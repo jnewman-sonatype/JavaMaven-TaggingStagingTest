@@ -72,7 +72,7 @@ pipeline {
         }
 
         // Once you run this pipeline once, you will need to approve the script from the console output
-        stage('Sonatype IQ/Lifecycle Scan'){
+        stage('Sonatype IQ Lifecycle Scan'){
             steps {
                 script{         
                     try {
@@ -103,7 +103,7 @@ pipeline {
                             ]
                         ]
                         IQ_SCAN_REPORT_URL = "${policyEvaluation.applicationCompositionReportUrl}"
-                        echo "Sonatype IQ/Lifecycle scan report URL: ${IQ_SCAN_REPORT_URL}"
+                        echo "Sonatype IQ Lifecycle scan report URL: ${IQ_SCAN_REPORT_URL}"
                     } 
                     catch (error) {
                         def policyEvaluation = error.policyEvaluation
