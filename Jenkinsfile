@@ -94,7 +94,7 @@ pipeline {
                                 namespaces: [
                                     [namespace: "${GROUP_ID}"]
                                 ]
-                                includes: [],
+                                includes: []
                             ],
                             java: [
                                 options:[
