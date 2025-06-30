@@ -38,18 +38,21 @@ pipeline {
     }
 
     environment {
-       ARTEFACT_NAME = "${WORKSPACE}/target/${artifactId}-${version}.${packaging}"
-       //DEPLOY_REPO = 'maven-releases'
-       TAG_FILE = "${WORKSPACE}/tag.json"
-       IQ_SCAN_URL = ""
-       iqStage = "${iqStage}"
+        ARTEFACT_NAME = "${WORKSPACE}/target/${artifactId}-${version}.${packaging}"
+        //DEPLOY_REPO = 'maven-releases'
+        TAG_FILE = "${WORKSPACE}/tag.json"
+        IQ_SCAN_URL = ""
+        //iqStage = "${iqStage}"
+        APP_ID = "${groupId}_${artifactId}"
+        BUILD_VERSION = "${version}-${BUILD_NUMBER}"
+        TAG_NAME = "${APP_ID}_${BUILD_VERSION}"
     }
     tools {
        maven 'M3'
     }
     stages {
 
-        stage('Build') {
+        stage('Maven Build') {
             steps {
                 sh 'mvn -s ci_settings.xml -gs ci_settings.xml -B -Dproject.version=$BUILD_VERSION -Dmaven.test.failure.ignore clean package'
             }
@@ -62,7 +65,7 @@ pipeline {
         }
 
         // Once you run this pipeline once, you will need to approve the script from the console output
-        stage('Nexus IQ Scan'){
+        stage('Sonatype IQ Scan'){
             steps {
                 script{         
                     try {
@@ -106,14 +109,13 @@ pipeline {
             steps {
                 script {
     
-                    // // Git data (Git plugin)
+                    // Git data (Git plugin)
                     echo "${GIT_URL}"
                     echo "${GIT_BRANCH}"
                     echo "${GIT_COMMIT}"
                     echo "${WORKSPACE}"
-
-                    
-                    // // construct the meta data (Pipeline Utility Steps plugin)
+                   
+                    // construct the meta data (Pipeline Utility Steps plugin)
                     def tagdata = readJSON text: '{}' 
                     tagdata.buildNumber = "${BUILD_NUMBER}" as String
                     tagdata.buildId = "${BUILD_ID}" as String
@@ -128,10 +130,10 @@ pipeline {
                     writeJSON(file: "${TAG_FILE}", json: tagdata, pretty: 4)
                     sh 'cat ${TAG_FILE}'
 
-                    createTag nexusInstanceId: 'nexus', tagAttributesPath: "${TAG_FILE}", tagName: "${BUILD_TAG}"
+                    createTag nexusInstanceId: 'nexus', tagAttributesPath: "${TAG_FILE}", tagName: "${TAG_NAME}"
 
                     // // write the tag name to the build page (Rich Text Publisher plugin)
-                    rtp abortedAsStable: false, failedAsStable: false, parserName: 'Confluence', stableText: "Nexus Repository Tag: ${BUILD_TAG}", unstableAsStable: true 
+                    rtp abortedAsStable: false, failedAsStable: false, parserName: 'Confluence', stableText: "Nexus Repository Tag: ${TAG_NAME}", unstableAsStable: true 
                 }
             }
         }
@@ -139,7 +141,24 @@ pipeline {
         stage('Upload to Nexus Repository'){
             steps {
                 script {
-                    nexusPublisher nexusInstanceId: 'nexus', nexusRepositoryId: "${DEPLOY_REPO}", packages: [[$class: 'MavenPackage', mavenAssetList: [[classifier: '', extension: "${packaging}", filePath: "${ARTEFACT_NAME}"]], mavenCoordinate: [artifactId: "${artifactId}", groupId: "${groupId}", packaging: "${packaging}", version: "${version}"]]], tagName: "${BUILD_TAG}"
+                    nexusPublisher 
+                        nexusInstanceId: 'nexus', 
+                        nexusRepositoryId: "${DEPLOY_REPO}", 
+                        packages: [[
+                            $class: 'MavenPackage', 
+                            mavenAssetList: [[
+                                classifier: '', 
+                                extension: "${packaging}", 
+                                filePath: "${ARTEFACT_NAME}"
+                            ]], 
+                            mavenCoordinate: [
+                                artifactId: "${artifactId}", 
+                                groupId: "${groupId}", 
+                                packaging: "${packaging}", 
+                                version: "${version}"
+                            ]
+                        ]], 
+                        tagName: "${TAG_NAME}"
                 }
             }
         }
@@ -155,7 +174,8 @@ pipeline {
         stage('Call Staging API'){
             steps {
                 script {
-                    sh 'curl -u admin:Welcome2 -X POST http://host.docker.internal:8081/service/rest/v1/staging/move/TSTest-Release?tag=${BUILD_TAG}'
+                    moveComponents destination: 'TSTest-Release', nexusInstanceId: 'nexus', tagName: "${TAG_NAME}"
+                    // sh 'curl -u admin:Welcome2 -X POST http://host.docker.internal:8081/service/rest/v1/staging/move/TSTest-Release?tag=${TAG_NAME}'
                 }
             }
         }
