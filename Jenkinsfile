@@ -26,26 +26,33 @@
 
 pipeline {
     agent any
-    parameters
-    {
-        string(name: 'groupId', defaultValue: 'JNTestApps', description: 'groupId taken from the project pom.xml')
-        string(name: 'artifactId', defaultValue: 'JavaMaven-TaggingStagingTest', description: 'artifactId taken from the project pom.xml')
-        string(name: 'version', defaultValue: '1.0.0', description: 'version taken from the project pom.xml')
-        string(name: 'packaging', defaultValue: 'jar', description: 'The file format extension of the final artefact e.g. ear | war | jar')
-        string(name: 'iqAppID', defaultValue: 'JavaMaven-TaggingStagingTest', description: 'IQ Server Application ID to evaluate against')
-        string(name: 'iqStage', defaultValue: 'build', description: 'IQ Server stage to evaluate against, Options are: build | stage-release | release')
-        string(name: 'DEPLOY_REPO', defaultValue: 'TSTest-Staging', description: 'Deployment repository for your built artifact. Usually maven-releases')
-    }
+    //parameters
+    // {
+    //     string(name: 'groupId', defaultValue: 'JNTestApps', description: 'groupId taken from the project pom.xml')
+    //     string(name: 'artifactId', defaultValue: 'JavaMaven-TaggingStagingTest', description: 'artifactId taken from the project pom.xml')
+    //     string(name: 'version', defaultValue: '1.0.0', description: 'version taken from the project pom.xml')
+    //     string(name: 'packaging', defaultValue: 'jar', description: 'The file format extension of the final artefact e.g. ear | war | jar')
+    //     string(name: 'iqAppID', defaultValue: 'JavaMaven-TaggingStagingTest', description: 'IQ Server Application ID to evaluate against')
+    //     string(name: 'iqStage', defaultValue: 'build', description: 'IQ Server stage to evaluate against, Options are: build | stage-release | release')
+    //     string(name: 'DEPLOY_REPO', defaultValue: 'TSTest-Staging', description: 'Deployment repository for your built artifact. Usually maven-releases')
+    // }
 
     environment {
-        ARTEFACT_NAME = "${WORKSPACE}/target/${artifactId}-${version}.${packaging}"
-        //DEPLOY_REPO = 'maven-releases'
+        GROUP_ID = "JNTestApps"
+        ARTIFACT_ID = "JavaMaven-TaggingStagingTest"
+        ARTIFACT_VERSION = "1.0.0"
+        PACKAGING = "jar"
+        IQ_STAGE = "build"
+        STAGING_DEPLOY_REPO = "TSTest-Staging"
+        RELEASE_DEPLOY_REPO = "TSTest-Release"
+
+        ARTIFACT_NAME = "${WORKSPACE}/target/${artifactId}-${version}.${packaging}"
         TAG_FILE = "${WORKSPACE}/tag.json"
-        IQ_SCAN_URL = ""
-        //iqStage = "${iqStage}"
         APP_ID = "${groupId}_${artifactId}"
         BUILD_VERSION = "${version}-${BUILD_NUMBER}"
         TAG_NAME = "${APP_ID}_${BUILD_VERSION}"
+
+        IQ_SCAN_REPORT_URL = "" // defined later
     }
     tools {
        maven 'M3'
@@ -59,42 +66,44 @@ pipeline {
             post {
                 success {
                   echo 'Now archiving ...'
-                  archiveArtifacts artifacts: "**/target/*.${packaging}"
+                  archiveArtifacts artifacts: "**/target/*.${PACKAGING}"
                 }
             }
         }
 
         // Once you run this pipeline once, you will need to approve the script from the console output
-        stage('Sonatype IQ Scan'){
+        stage('Sonatype IQ/Lifecycle Scan'){
             steps {
                 script{         
                     try {
                         def policyEvaluation = nexusPolicyEvaluation failBuildOnNetworkError: true, 
-                        iqApplication: selectedApplication("${iqAppID}"), 
+                        iqApplication: selectedApplication("${APP_ID}"), 
                         iqScanPatterns: [[scanPattern: "**/target/*.${packaging}"]], 
-                        iqStage: "${iqStage}", 
+                        iqStage: "${IQ_STAGE}", 
                         jobCredentialsId: '',
-                        callflow: [
-                          enable: true,
-                          failOnError: false,
-                          timeout: '10 minutes',
-                          logLevel: 'DEBUG',
-                          entrypointStrategy: [
-                            $class: 'NamedStrategy',
-                            name: 'ACCESSIBLE_CONCRETE',
-                            namespaces: [
-                              'JNTestApps'
+                        reachability: [
+                            failOnError: false,
+                            timeout: '10 minutes',
+                            logLevel: 'DEBUG',
+                            javaAnalysis: [
+                                enable: true,
+                                entrypointStrategy: [
+                                    $class: 'NamedStrategy',
+                                    name: 'ACCESSIBLE_CONCRETE',
+                                ],
+                                namespaces: [
+                                    [namespace: "${GROUP_ID}"]
+                                ]
+                                includes: [],
+                            ],
+                            java: [
+                                options:[
+                                    '-Xmx4G'
+                                ]
                             ]
-                          ],
-                          includes: [],
-                          java: [
-                            options:[
-                              '-Xmx4G'
-                            ]
-                          ]
                         ]
-                        echo "Nexus IQ scan succeeded: ${policyEvaluation.applicationCompositionReportUrl}"
-                        IQ_SCAN_URL = "${policyEvaluation.applicationCompositionReportUrl}"
+                        IQ_SCAN_REPORT_URL = "${policyEvaluation.applicationCompositionReportUrl}"
+                        echo "Sonatype IQ/Lifecycle scan report URL: ${IQ_SCAN_REPORT_URL}"
                     } 
                     catch (error) {
                         def policyEvaluation = error.policyEvaluation
@@ -105,7 +114,7 @@ pipeline {
             }
         }
 
-         stage('Create tag'){
+         stage('Create Nexus Repository Tag'){
             steps {
                 script {
     
@@ -121,9 +130,10 @@ pipeline {
                     tagdata.buildId = "${BUILD_ID}" as String
                     tagdata.buildJob = "${JOB_NAME}" as String
                     tagdata.buildTag = "${BUILD_TAG}" as String
-                    tagdata.appVersion = "${version}" as String
+                    tagdata.appId = "${APP_ID}" as String
+                    tagdata.appVersion = "${BUILD_VERSION}" as String
                     tagdata.buildUrl = "${BUILD_URL}" as String
-                    tagdata.iqScanUrl = "${IQ_SCAN_URL}" as String
+                    tagdata.iqScanReportUrl = "${IQ_SCAN_REPORT_URL}" as String
                     tagdata.gitUrl = "${GIT_BRANCH}" as String
                     // //tagData.promote = "no" as String
 
@@ -138,10 +148,10 @@ pipeline {
             }
         }
 
-        stage('Upload to Nexus Repository'){
+        stage('Publish to Nexus Repository Staging Repo'){
             steps {
                 script {
-                    nexusPublisher nexusInstanceId: 'nexus', nexusRepositoryId: "${DEPLOY_REPO}", packages: [[$class: 'MavenPackage', mavenAssetList: [[classifier: '', extension: "${packaging}", filePath: "${ARTEFACT_NAME}"]], mavenCoordinate: [artifactId: "${artifactId}", groupId: "${groupId}", packaging: "${packaging}", version: "${version}"]]], tagName: "${TAG_NAME}"
+                    nexusPublisher nexusInstanceId: 'nexus', nexusRepositoryId: "${STAGING_DEPLOY_REPO}", packages: [[$class: 'MavenPackage', mavenAssetList: [[classifier: '', extension: "${PACKAGING}", filePath: "${ARTiFACT_NAME}"]], mavenCoordinate: [artifactId: "${ARTIFACT_ID}", groupId: "${GROUP_ID}", packaging: "${PACKAGING}", version: "${BUILD_VERSION}"]]], tagName: "${TAG_NAME}"
                 }
             }
         }
@@ -154,15 +164,12 @@ pipeline {
             }
         }
         
-        stage('Call Staging API'){
+        stage('Move to Nexus Repository Release Repo'){
             steps {
                 script {
-                    moveComponents destination: 'TSTest-Release', nexusInstanceId: 'nexus', tagName: "${TAG_NAME}"
-                    // sh 'curl -u admin:Welcome2 -X POST http://host.docker.internal:8081/service/rest/v1/staging/move/TSTest-Release?tag=${TAG_NAME}'
+                    moveComponents destination: "${RELEASE_DEPLOY_REPO}", nexusInstanceId: 'nexus', tagName: "${TAG_NAME}"
                 }
             }
-        }
-        
-        
+        }  
     }
 }
