@@ -99,7 +99,7 @@ pipeline {
                             //     ]
                             // ]
                         )
-                        def IQ_SCAN_REPORT_URL = "${policyEvaluation.applicationCompositionReportUrl}"
+                        IQ_SCAN_REPORT_URL = "${policyEvaluation.applicationCompositionReportUrl}"
                         echo "Sonatype IQ Lifecycle scan report URL: ${IQ_SCAN_REPORT_URL}"
                     } 
                     catch (error) {
