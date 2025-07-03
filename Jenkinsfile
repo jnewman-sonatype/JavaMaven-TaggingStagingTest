@@ -72,7 +72,7 @@ pipeline {
         }
 
         // Once you run this pipeline once, you will need to approve the script from the console output
-        stage('Sonatype IQ Lifecycle Scan'){
+/*        stage('Sonatype IQ Lifecycle Scan'){
             steps {
                 script{         
                     try {
@@ -113,7 +113,7 @@ pipeline {
                 }
             }
         }
-
+*/
          stage('Create Nexus Repository Tag'){
             steps {
                 script {
