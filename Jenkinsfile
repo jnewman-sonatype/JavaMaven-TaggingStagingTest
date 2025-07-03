@@ -78,27 +78,27 @@ pipeline {
                             iqStage: "${IQ_STAGE}", 
                             iqScanPatterns: [[scanPattern: "**/target/*.${PACKAGING}"]], 
 
-                            // reachability: [
-                            //     failOnError: false,
-                            //     timeout: '10 minutes',
-                            //     logLevel: 'DEBUG',
-                            //     javaAnalysis: [
-                            //         enable: true,
-                            //         entrypointStrategy: [
-                            //             $class: 'NamedStrategy',
-                            //             name: 'ACCESSIBLE_CONCRETE',
-                            //         ],
-                            //         namespaces: [
-                            //             [namespace: "${GROUP_ID}"]
-                            //         ],
-                            //         includes: []
-                            //     ],
-                            //     java: [
-                            //         options:[
-                            //             '-Xmx4G'
-                            //         ]
-                            //     ]
-                            // ]
+                            reachability: [
+                                failOnError: false,
+                                timeout: '10 minutes',
+                                logLevel: 'DEBUG',
+                                javaAnalysis: [
+                                    enable: true,
+                                    entrypointStrategy: [
+                                        $class: 'NamedStrategy',
+                                        name: 'ACCESSIBLE_CONCRETE',
+                                    ],
+                                    namespaces: [
+                                        [namespace: "${GROUP_ID}"]
+                                    ],
+                                    includes: []
+                                ],
+                                java: [
+                                    options:[
+                                        '-Xmx4G'
+                                    ]
+                                ]
+                            ]
                         )
                         IQ_SCAN_REPORT_URL = "${policyEvaluation.applicationCompositionReportUrl}"
                         echo "Sonatype IQ Lifecycle scan report URL: ${IQ_SCAN_REPORT_URL}"
