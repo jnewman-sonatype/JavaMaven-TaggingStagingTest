@@ -68,7 +68,7 @@ pipeline {
                     try {
                         def policyEvaluation = nexusPolicyEvaluation failBuildOnNetworkError: true, 
                         iqApplication: selectedApplication("${APP_ID}"), 
-                        iqScanPatterns: [[scanPattern: "**/target/*.${packaging}"]], 
+                        iqScanPatterns: [[scanPattern: "**/target/*.${PACKAGING}"]], 
                         iqStage: "${IQ_STAGE}", 
                         jobCredentialsId: '',
                         reachability: [
