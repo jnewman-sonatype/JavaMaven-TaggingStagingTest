@@ -71,49 +71,7 @@ pipeline {
             }
         }
 
-        // Once you run this pipeline once, you will need to approve the script from the console output
-/*        stage('Sonatype IQ Lifecycle Scan'){
-            steps {
-                script{         
-                    try {
-                        def policyEvaluation = nexusPolicyEvaluation failBuildOnNetworkError: true, 
-                        iqApplication: selectedApplication("${APP_ID}"), 
-                        iqScanPatterns: [[scanPattern: "**/target/*.${packaging}"]], 
-                        iqStage: "${IQ_STAGE}", 
-                        jobCredentialsId: '',
-                        reachability: [
-                            failOnError: false,
-                            timeout: '10 minutes',
-                            logLevel: 'DEBUG',
-                            javaAnalysis: [
-                                enable: true,
-                                entrypointStrategy: [
-                                    $class: 'NamedStrategy',
-                                    name: 'ACCESSIBLE_CONCRETE',
-                                ],
-                                namespaces: [
-                                    [namespace: "${GROUP_ID}"]
-                                ],
-                                includes: []
-                            ],
-                            java: [
-                                options:[
-                                    '-Xmx4G'
-                                ]
-                            ]
-                        ]
-                        IQ_SCAN_REPORT_URL = "${policyEvaluation.applicationCompositionReportUrl}"
-                        echo "Sonatype IQ Lifecycle scan report URL: ${IQ_SCAN_REPORT_URL}"
-                    } 
-                    catch (error) {
-                        def policyEvaluation = error.policyEvaluation
-                        echo "Nexus IQ scan vulnerabilities detected', ${policyEvaluation.applicationCompositionReportUrl}"
-                        throw error
-                    }
-                }
-            }
-        }
-*/
+
          stage('Create Nexus Repository Tag'){
             steps {
                 script {
