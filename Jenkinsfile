@@ -40,7 +40,7 @@ pipeline {
         TAG_FILE = "${WORKSPACE}/tag.json"
         APP_ID = "${GROUP_ID}_${ARTIFACT_ID}"
         BUILD_VERSION = "${ARTIFACT_VERSION}-${BUILD_NUMBER}"
-        ARTIFACT_NAME = "${WORKSPACE}/target/${ARTIFACT_ID}-${BUILD_VERSION}.${PACKAGING}"
+        ARTIFACT_NAME = "${WORKSPACE}/target/${ARTIFACT_ID}-${ARTIFACT_VERSION}.${PACKAGING}"
         TAG_NAME = "${APP_ID}_${BUILD_VERSION}"
 
         IQ_SCAN_REPORT_URL = "" // defined later
