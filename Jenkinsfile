@@ -99,7 +99,7 @@ pipeline {
                             //     ]
                             // ]
                         )
-                        IQ_SCAN_REPORT_URL = "${policyEvaluation.applicationCompositionReportUrl}"
+                        def IQ_SCAN_REPORT_URL = "${policyEvaluation.applicationCompositionReportUrl}"
                         echo "Sonatype IQ Lifecycle scan report URL: ${IQ_SCAN_REPORT_URL}"
                     } 
                     catch (error) {
@@ -148,7 +148,7 @@ pipeline {
         stage('Publish to Nexus Repository Staging Repo'){
             steps {
                 script {
-                    nexusPublisher nexusInstanceId: 'nexus', nexusRepositoryId: "${STAGING_DEPLOY_REPO}", packages: [[$class: 'MavenPackage', mavenAssetList: [[classifier: '', extension: "${PACKAGING}", filePath: "${ARTiFACT_NAME}"]], mavenCoordinate: [artifactId: "${ARTIFACT_ID}", groupId: "${GROUP_ID}", packaging: "${PACKAGING}", version: "${BUILD_VERSION}"]]], tagName: "${TAG_NAME}"
+                    nexusPublisher nexusInstanceId: 'nexus', nexusRepositoryId: "${STAGING_DEPLOY_REPO}", packages: [[$class: 'MavenPackage', mavenAssetList: [[classifier: '', extension: "${PACKAGING}", filePath: "${ARTIFACT_NAME}"]], mavenCoordinate: [artifactId: "${ARTIFACT_ID}", groupId: "${GROUP_ID}", packaging: "${PACKAGING}", version: "${BUILD_VERSION}"]]], tagName: "${TAG_NAME}"
                 }
             }
         }
