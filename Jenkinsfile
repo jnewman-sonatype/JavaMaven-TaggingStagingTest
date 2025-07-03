@@ -5,25 +5,15 @@
 // configure Jenkins Nexus Repo and IQ connections in "Settings > Configure System"
 // set "git" to auto install in "Settings > Global Tools Config"
 // Configure Maven plugin install with "M3" ID in "Global Tools Config"
-// I'm sure more info is missing but this is a good start.
 
 // Install the following plugins for this script to work
 // "Pipeline Utility Steps" plugin
 // "Rich Text Publisher" plugin
 // "Pipeline basic steps" plugin
 // "user build vars" plugin
-   // **IMPORTANT** you will also need to approve part of the script running from the console output. Look for this output:
-      // Scripts not permitted to use method com.sonatype.nexus.api.iq.ApplicationPolicyEvaluation getApplicationCompositionReportUrl. Administrators can decide whether to approve or reject this signature.
-
-//Create a Jenkins pipeline build with "Project is parameterised" and declare the following string settings.
-  // "iqAppID"     - DESCRIPTION: IQ Server Application ID to evaluate against
-  // "iqStage"     - DESCRIPTION: IQ Server stage to evaluate against, Options are: "build | stage-release | release"
-  // "DEPLOY_REPO" - DESCRIPTION: Deployment repository for your built artefact. Usually "maven-releases" or "maven-snapshots"
-  // "groupId"     - DESCRIPTION: groupId taken from the project pom.xml
-  // "artifactId"  - DESCRIPTION: artifactId taken from the project pom.xml
-  // "version"     - DESCRIPTION: version taken from the project pom.xml
-  // "packaging"   - DESCRIPTION: The file format extension of the final artefact EG "ear | war | jar"
-
+// **IMPORTANT** you will also need to approve part of the script running from the console output. Look for this output:
+// Scripts not permitted to use method com.sonatype.nexus.api.iq.ApplicationPolicyEvaluation getApplicationCompositionReportUrl. Administrators can decide whether to approve or reject this signature.
+//Create a Jenkins pipeline build with "Project is parameterised" 
 pipeline {
     agent any
     //parameters
@@ -71,6 +61,48 @@ pipeline {
             }
         }
 
+        // Once you run this pipeline once, you will need to approve the script from the console output
+        stage('Sonatype IQ Lifecycle Scan'){
+            steps {
+                script{         
+                    try {
+                        def policyEvaluation = nexusPolicyEvaluation failBuildOnNetworkError: true, 
+                        iqApplication: selectedApplication("${APP_ID}"), 
+                        iqScanPatterns: [[scanPattern: "**/target/*.${packaging}"]], 
+                        iqStage: "${IQ_STAGE}", 
+                        jobCredentialsId: '',
+                        reachability: [
+                            failOnError: false,
+                            timeout: '10 minutes',
+                            logLevel: 'DEBUG',
+                            javaAnalysis: [
+                                enable: true,
+                                entrypointStrategy: [
+                                    $class: 'NamedStrategy',
+                                    name: 'ACCESSIBLE_CONCRETE',
+                                ],
+                                namespaces: [
+                                    [namespace: "${GROUP_ID}"]
+                                ],
+                                includes: []
+                            ],
+                            java: [
+                                options:[
+                                    '-Xmx4G'
+                                ]
+                            ]
+                        ]
+                        IQ_SCAN_REPORT_URL = "${policyEvaluation.applicationCompositionReportUrl}"
+                        echo "Sonatype IQ Lifecycle scan report URL: ${IQ_SCAN_REPORT_URL}"
+                    } 
+                    catch (error) {
+                        def policyEvaluation = error.policyEvaluation
+                        echo "Nexus IQ scan vulnerabilities detected', ${policyEvaluation.applicationCompositionReportUrl}"
+                        throw error
+                    }
+                }
+            }
+        }
 
          stage('Create Nexus Repository Tag'){
             steps {
