@@ -66,32 +66,39 @@ pipeline {
             steps {
                 script{         
                     try {
-                        def policyEvaluation = nexusPolicyEvaluation failBuildOnNetworkError: true, 
-                        iqApplication: selectedApplication("${APP_ID}"), 
-                        iqScanPatterns: [[scanPattern: "**/target/*.${PACKAGING}"]], 
-                        iqStage: "${IQ_STAGE}", 
-                        jobCredentialsId: '',
-                        // reachability: [
-                        //     failOnError: false,
-                        //     timeout: '10 minutes',
-                        //     logLevel: 'DEBUG',
-                        //     javaAnalysis: [
-                        //         enable: true,
-                        //         entrypointStrategy: [
-                        //             $class: 'NamedStrategy',
-                        //             name: 'ACCESSIBLE_CONCRETE',
-                        //         ],
-                        //         namespaces: [
-                        //             [namespace: "${GROUP_ID}"]
-                        //         ],
-                        //         includes: []
-                        //     ],
-                        //     java: [
-                        //         options:[
-                        //             '-Xmx4G'
-                        //         ]
-                        //     ]
-                        // ]
+                        def policyEvaluation = nexusPolicyEvaluation( 
+                            iqInstanceId: 'nexus-iq-server_8070',
+                            jobCredentialsId: '',
+                            enableDebugLogging: false,
+                            failBuildOnNetworkError: true,
+                            failBuildOnScanningErrors: false,
+
+                            iqApplication: "${APP_ID}", 
+                            iqStage: "${IQ_STAGE}", 
+                            iqScanPatterns: [[scanPattern: "**/target/*.${PACKAGING}"]], 
+
+                            // reachability: [
+                            //     failOnError: false,
+                            //     timeout: '10 minutes',
+                            //     logLevel: 'DEBUG',
+                            //     javaAnalysis: [
+                            //         enable: true,
+                            //         entrypointStrategy: [
+                            //             $class: 'NamedStrategy',
+                            //             name: 'ACCESSIBLE_CONCRETE',
+                            //         ],
+                            //         namespaces: [
+                            //             [namespace: "${GROUP_ID}"]
+                            //         ],
+                            //         includes: []
+                            //     ],
+                            //     java: [
+                            //         options:[
+                            //             '-Xmx4G'
+                            //         ]
+                            //     ]
+                            // ]
+                        )
                         IQ_SCAN_REPORT_URL = "${policyEvaluation.applicationCompositionReportUrl}"
                         echo "Sonatype IQ Lifecycle scan report URL: ${IQ_SCAN_REPORT_URL}"
                     } 
