@@ -86,7 +86,7 @@ pipeline {
                                     enable: true,
                                     entrypointStrategy: 'ACCESSIBLE_CONCRETE',
                                     namespaces: [
-                                        // [namespace: "${GROUP_ID}"]
+                                        [namespace: "${GROUP_ID}"]
                                     ],
                                     includes: []
                                 ],
