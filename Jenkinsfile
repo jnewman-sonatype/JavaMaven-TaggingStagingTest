@@ -84,12 +84,9 @@ pipeline {
                                 logLevel: 'DEBUG',
                                 javaAnalysis: [
                                     enable: true,
-                                    entrypointStrategy: [
-                                        $class: 'NamedStrategy',
-                                        name: 'ACCESSIBLE_CONCRETE',
-                                    ],
+                                    entrypointStrategy: 'ACCESSIBLE_CONCRETE',
                                     namespaces: [
-                                        [namespace: "${GROUP_ID}"]
+                                        // [namespace: "${GROUP_ID}"]
                                     ],
                                     includes: []
                                 ],
